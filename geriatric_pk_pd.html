@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>高齢者における薬物動態の変化</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+  background: #f5f4ef;
+  color: #1a1a18;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+}
+h1 {
+  font-size: 20px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.subtitle {
+  font-size: 13px;
+  color: #5f5e5a;
+  margin-bottom: 1.5rem;
+}
+.card {
+  background: #fff;
+  border-radius: 12px;
+  border: 0.5px solid rgba(0,0,0,0.1);
+  padding: 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.age-btn {
+  padding: 6px 18px;
+  border-radius: 8px;
+  border: 0.5px solid #aaa9a2;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  color: #5f5e5a;
+  transition: background .15s, color .15s;
+}
+.age-btn:hover { background: #f1efe8; }
+.age-btn.active {
+  background: #e6f1fb;
+  color: #0c447c;
+  border-color: transparent;
+  font-weight: 500;
+}
+.btn-row { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+@media (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } }
+.section-label {
+  font-size: 11px;
+  color: #888780;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin: 1.2rem 0 .6rem;
+}
+.param-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.param-label { font-size: 13px; color: #5f5e5a; min-width: 140px; }
+input[type=range] {
+  flex: 1;
+  height: 4px;
+  accent-color: #378add;
+  cursor: pointer;
+}
+.param-val { font-size: 13px; font-weight: 500; min-width: 70px; text-align: right; }
+.metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.metric {
+  background: #f5f4ef;
+  border-radius: 8px;
+  padding: .75rem;
+}
+.metric-label { font-size: 12px; color: #5f5e5a; margin-bottom: 2px; }
+.metric-value { font-size: 18px; font-weight: 500; }
+.metric-tag { font-size: 11px; margin-top: 2px; }
+.pk-badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+.badge-up   { background: #faece7; color: #712b13; }
+.badge-down { background: #e1f5ee; color: #085041; }
+.badge-same { background: #f1efe8; color: #5f5e5a; }
+.legend { display: flex; gap: 16px; font-size: 12px; color: #5f5e5a; margin-bottom: 8px; flex-wrap: wrap; }
+.legend-dot { width: 10px; height: 3px; display: inline-block; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+.chart-wrap { position: relative; width: 100%; height: 280px; }
+.note-box {
+  background: #f5f4ef;
+  border-radius: 8px;
+  padding: .75rem 1rem;
+  margin-top: 12px;
+}
+.note-label { font-size: 12px; color: #5f5e5a; margin-bottom: 4px; }
+.note-text { font-size: 13px; line-height: 1.6; }
+.detail-btn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 9px;
+  border-radius: 8px;
+  border: 0.5px solid #aaa9a2;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  color: #1a1a18;
+}
+.detail-btn:hover { background: #f1efe8; }
+.pd-band {
+  position: absolute;
+  left: 0; right: 0;
+  pointer-events: none;
+  border-radius: 0;
+}
+.pd-toggle-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 1rem;
+  padding: .6rem .9rem;
+  background: #f0f4ff;
+  border-radius: 8px;
+  border: 0.5px solid #c5d4f0;
+}
+.pd-toggle-label { font-size: 13px; color: #1a1a18; }
+.pd-toggle-note { font-size: 12px; color: #4a5a8a; margin-left: auto; }
+.toggle-switch {
+  position: relative; width: 36px; height: 20px; cursor: pointer;
+}
+.toggle-switch input { opacity: 0; width:0; height:0; }
+.toggle-slider {
+  position: absolute; inset: 0;
+  background: #c8c6be; border-radius: 20px;
+  transition: background .2s;
+}
+.toggle-slider:before {
+  content: '';
+  position: absolute; width: 14px; height: 14px;
+  left: 3px; top: 3px;
+  background: white; border-radius: 50%;
+  transition: transform .2s;
+}
+.toggle-switch input:checked + .toggle-slider { background: #4a7fd4; }
+.toggle-switch input:checked + .toggle-slider:before { transform: translateX(16px); }
+.pd-params { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.pd-badge {
+  display: inline-block; font-size: 11px; padding: 2px 7px;
+  border-radius: 6px; background: #faece7; color: #712b13;
+  font-weight: 500; margin-left: 4px;
+}
+.info-section {
+  max-width: 1100px;
+  margin: 1.5rem auto 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+.info-card {
+  background: #fff;
+  border-radius: 10px;
+  border: 0.5px solid rgba(0,0,0,0.1);
+  padding: 1rem;
+}
+.info-title { font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+.info-body { font-size: 12px; color: #5f5e5a; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>高齢者における薬物動態・薬力学の変化</h1>
+  <p class="subtitle">スライダーで生理学的パラメータを変化させ、血中濃度曲線への影響を確認してください。PDトグルで薬力学感受性の変化も重ねて表示できます。</p>
+
+  <div class="btn-row">
+    <button class="age-btn active" id="btn-young" onclick="setPreset('young')">若年成人（25歳）</button>
+    <button class="age-btn" id="btn-mid"   onclick="setPreset('mid')">中年（55歳）</button>
+    <button class="age-btn" id="btn-elder" onclick="setPreset('elder')">高齢者（75歳）</button>
+    <button class="age-btn" id="btn-frail" onclick="setPreset('frail')">虚弱高齢者（80歳+）</button>
+  </div>
+
+  <div class="grid2">
+
+    <!-- Left column -->
+    <div>
+      <p class="section-label">生理学的パラメータ</p>
+
+      <div class="param-row">
+        <span class="param-label">腎機能 (GFR)</span>
+        <input type="range" id="gfr" min="10" max="120" value="110" step="1" oninput="update()"/>
+        <span class="param-val"><span id="gfr-v">110</span> mL/min</span>
+      </div>
+      <div class="param-row">
+        <span class="param-label">肝血流量</span>
+        <input type="range" id="hbf" min="30" max="100" value="100" step="1" oninput="update()"/>
+        <span class="param-val"><span id="hbf-v">100</span> %</span>
+      </div>
+      <div class="param-row">
+        <span class="param-label">体脂肪率</span>
+        <input type="range" id="fat" min="10" max="50" value="18" step="1" oninput="update()"/>
+        <span class="param-val"><span id="fat-v">18</span> %</span>
+      </div>
+      <div class="param-row">
+        <span class="param-label">血清アルブミン</span>
+        <input type="range" id="alb" min="2.0" max="5.0" value="4.5" step="0.1" oninput="update()"/>
+        <span class="param-val"><span id="alb-v">4.5</span> g/dL</span>
+      </div>
+      <div class="param-row">
+        <span class="param-label">体内総水分量</span>
+        <input type="range" id="tbw" min="40" max="70" value="65" step="1" oninput="update()"/>
+        <span class="param-val"><span id="tbw-v">65</span> %</span>
+      </div>
+      <div class="param-row">
+        <span class="param-label">胃排出速度</span>
+        <input type="range" id="get" min="30" max="100" value="100" step="1" oninput="update()"/>
+        <span class="param-val"><span id="get-v">100</span> %</span>
+      </div>
+
+      <p class="section-label">薬物動態パラメータ（計算値）</p>
+      <div class="metrics-grid">
+        <div class="metric">
+          <p class="metric-label">分布容積 (Vd)</p>
+          <p class="metric-value" id="vd-v">—</p>
+          <p class="metric-tag" id="vd-tag"></p>
+        </div>
+        <div class="metric">
+          <p class="metric-label">クリアランス (CL)</p>
+          <p class="metric-value" id="cl-v">—</p>
+          <p class="metric-tag" id="cl-tag"></p>
+        </div>
+        <div class="metric">
+          <p class="metric-label">半減期 (t½)</p>
+          <p class="metric-value" id="t12-v">—</p>
+          <p class="metric-tag" id="t12-tag"></p>
+        </div>
+        <div class="metric">
+          <p class="metric-label">最高血中濃度 (Cmax)</p>
+          <p class="metric-value" id="cmax-v">—</p>
+          <p class="metric-tag" id="cmax-tag"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div>
+      <p class="section-label">血中濃度-時間曲線</p>
+
+      <!-- PD toggle -->
+      <div class="pd-toggle-row">
+        <label class="toggle-switch">
+          <input type="checkbox" id="pd-toggle" onchange="update()">
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="pd-toggle-label">薬力学（PD）感受性を反映する</span>
+        <span class="pd-toggle-note" id="pd-toggle-note">オフ：治療域は若年成人基準で固定</span>
+      </div>
+      <div id="pd-param-area" style="display:none; margin-bottom:.8rem;">
+        <div class="pd-params">
+          <div class="param-row" style="margin-bottom:0;">
+            <span class="param-label" style="min-width:160px;">受容体感受性 <span class="pd-badge" id="pd-sens-badge">+0%</span></span>
+            <input type="range" id="pd-sens" min="0.5" max="2.0" value="1.0" step="0.05" oninput="update()" style="width:120px;"/>
+            <span class="param-val"><span id="pd-sens-v">1.0</span> 倍</span>
+          </div>
+          <div class="param-row" style="margin-bottom:0;">
+            <span class="param-label" style="min-width:160px;">代償・回復能力 <span class="pd-badge" id="pd-comp-badge" style="background:#e1f5ee;color:#085041;">+0%</span></span>
+            <input type="range" id="pd-comp" min="0.3" max="1.0" value="1.0" step="0.05" oninput="update()" style="width:120px;"/>
+            <span class="param-val"><span id="pd-comp-v">1.0</span> 倍</span>
+          </div>
+        </div>
+        <p style="font-size:12px; color:#4a5a8a; line-height:1.6;">
+          受容体感受性↑ / 代償能↓ により、<strong>同じ血中濃度でも副作用が出やすくなる</strong>ため、治療上限が下がります。
+        </p>
+      </div>
+
+      <div class="legend">
+        <span><span class="legend-dot" style="background:#378add;"></span>現在の設定</span>
+        <span><span class="legend-dot" style="background:#b4b2a9; border-top: 2px dashed #b4b2a9; height:0; display:inline-block; width:10px; vertical-align:middle;"></span>若年成人（参照）</span>
+        <span><span class="legend-dot" style="background:#e24b4a;"></span>治療域 上限</span>
+        <span><span class="legend-dot" style="background:#639922;"></span>治療域 下限</span>
+        <span id="pd-legend" style="display:none;"><span class="legend-dot" style="background:#f5a623; width:12px; height:8px; border-radius:3px; opacity:.5;"></span>PD補正後 上限</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="pkChart"></canvas>
+      </div>
+      <div class="note-box">
+        <p class="note-label">臨床的注意点</p>
+        <p class="note-text" id="clinical-note">—</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Accumulation chart card -->
+<div class="card" style="margin-top:1.5rem;">
+  <h2 style="font-size:17px; font-weight:500; margin-bottom:4px;">反復投与時の蓄積シミュレーション</h2>
+  <p class="subtitle">同じ年齢プリセット・スライダー設定を反映します。投与回数と投与間隔を変えて蓄積の程度を確認してください。</p>
+
+  <div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:1.2rem; align-items:flex-end;">
+    <div>
+      <p class="section-label" style="margin-top:0;">投与間隔</p>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <input type="range" id="tau" min="4" max="48" value="12" step="1" oninput="updateAccum()" style="width:140px;"/>
+        <span style="font-size:13px; font-weight:500;"><span id="tau-v">12</span> 時間ごと</span>
+      </div>
+    </div>
+    <div>
+      <p class="section-label" style="margin-top:0;">投与回数</p>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <input type="range" id="doses" min="2" max="14" value="7" step="1" oninput="updateAccum()" style="width:140px;"/>
+        <span style="font-size:13px; font-weight:500;"><span id="doses-v">7</span> 回</span>
+      </div>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <div style="background:#f5f4ef; border-radius:8px; padding:.6rem .9rem; min-width:110px;">
+        <p style="font-size:11px; color:#5f5e5a; margin-bottom:2px;">蓄積比（高齢者）</p>
+        <p style="font-size:17px; font-weight:500;" id="accum-ratio-elder">—</p>
+      </div>
+      <div style="background:#f5f4ef; border-radius:8px; padding:.6rem .9rem; min-width:110px;">
+        <p style="font-size:11px; color:#5f5e5a; margin-bottom:2px;">蓄積比（若年成人）</p>
+        <p style="font-size:17px; font-weight:500;" id="accum-ratio-young">—</p>
+      </div>
+      <div style="background:#faece7; border-radius:8px; padding:.6rem .9rem; min-width:110px;">
+        <p style="font-size:11px; color:#712b13; margin-bottom:2px;">蓄積の差</p>
+        <p style="font-size:17px; font-weight:500; color:#712b13;" id="accum-diff">—</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; gap:16px; font-size:12px; color:#5f5e5a; margin-bottom:8px; flex-wrap:wrap;">
+    <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:3px;background:#378ADD;display:inline-block;border-radius:2px;"></span>現在の設定（高齢者等）</span>
+    <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:3px;background:#B4B2A9;display:inline-block;border-radius:2px;border-top:2px dashed #B4B2A9;height:0;width:10px;"></span>若年成人（参照）</span>
+    <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:3px;background:#E24B4A;display:inline-block;border-radius:2px;"></span>治療域 上限</span>
+    <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:3px;background:#639922;display:inline-block;border-radius:2px;"></span>治療域 下限</span>
+  </div>
+
+  <div style="position:relative; width:100%; height:300px;">
+    <canvas id="accumChart"></canvas>
+  </div>
+
+  <div class="note-box" style="margin-top:12px;">
+    <p class="note-label">蓄積のポイント</p>
+    <p class="note-text" id="accum-note">—</p>
+  </div>
+</div>
+
+<!-- Info cards -->
+<div class="info-section">
+  <div class="info-card">
+    <p class="info-title">腎機能（GFR）</p>
+    <p class="info-body">加齢とともに糸球体濾過量が低下。水溶性薬物（アミノグリコシド、ジゴキシン等）の排泄が遅延し蓄積リスクが高まる。</p>
+  </div>
+  <div class="info-card">
+    <p class="info-title">肝血流量</p>
+    <p class="info-body">高齢者では約40%低下。初回通過効果を受ける薬物（プロプラノロール、リドカイン等）のバイオアベイラビリティが変化する。</p>
+  </div>
+  <div class="info-card">
+    <p class="info-title">体組成の変化</p>
+    <p class="info-body">体脂肪増加・体水分減少。脂溶性薬物（ジアゼパム等）はVd拡大・t½延長。水溶性薬物は高濃度化しやすい。</p>
+  </div>
+  <div class="info-card">
+    <p class="info-title">血清アルブミン</p>
+    <p class="info-body">低アルブミン血症では遊離型薬物濃度が上昇。ワルファリン・フェニトインなど蛋白結合率の高い薬物で特に注意。</p>
+  </div>
+  <div class="info-card" style="border-left: 3px solid #f5a623;">
+    <p class="info-title">薬力学（PD）の変化</p>
+    <p class="info-body">高齢者ではベンゾジアゼピン・オピオイド・抗凝固薬などへの受容体感受性が増大。同じ血中濃度でも副作用が出やすく、実質的な「安全域」が狭まる。PKだけでなくPDも考慮した投与設計が必要。</p>
+  </div>
+  <div class="info-card" style="border-left: 3px solid #f5a623;">
+    <p class="info-title">代償・回復能力の低下</p>
+    <p class="info-body">自律神経反射・体温調節・認知予備能の低下により、わずかな薬物作用でも過剰反応が起きやすい。「治療域上限の低下」はこの代償能低下を反映している。</p>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const PRESETS = {
+  young: { gfr:110, hbf:100, fat:18, alb:4.5, tbw:65, get:100 },
+  mid:   { gfr:80,  hbf:75,  fat:28, alb:4.0, tbw:58, get:75  },
+  elder: { gfr:50,  hbf:55,  fat:35, alb:3.4, tbw:50, get:55  },
+  frail: { gfr:25,  hbf:35,  fat:42, alb:2.8, tbw:44, get:35  }
+};
+const REF = PRESETS.young;
+let pkChart = null;
+
+const PD_PRESETS = {
+  young: { sens: 1.0,  comp: 1.0  },
+  mid:   { sens: 1.15, comp: 0.85 },
+  elder: { sens: 1.45, comp: 0.65 },
+  frail: { sens: 1.80, comp: 0.40 }
+};
+
+function setPreset(key) {
+  const p = PRESETS[key];
+  ['gfr','hbf','fat','alb','tbw','get'].forEach(id => {
+    document.getElementById(id).value = p[id];
+  });
+  // PDスライダーも自動設定
+  const pd = PD_PRESETS[key];
+  document.getElementById('pd-sens').value = pd.sens;
+  document.getElementById('pd-comp').value = pd.comp;
+  ['btn-young','btn-mid','btn-elder','btn-frail'].forEach(b =>
+    document.getElementById(b).classList.remove('active'));
+  document.getElementById('btn-'+key).classList.add('active');
+  update();
+}
+
+function tagHtml(val, refVal, higherIsBetter) {
+  const pct = Math.round((val - refVal) / refVal * 100);
+  if (Math.abs(pct) < 3) return '<span class="pk-badge badge-same">±0%</span>';
+  const up = pct > 0;
+  const cls = (higherIsBetter && !up) || (!higherIsBetter && up) ? 'badge-up' :
+              (higherIsBetter && up) || (!higherIsBetter && !up) ? 'badge-down' : 'badge-same';
+  return `<span class="pk-badge ${cls}">${up?'+':''}${pct}%</span>`;
+}
+
+function buildCurve(ka, ke, vd, dose, N) {
+  return Array.from({length:N}, (_,i) => {
+    const t = i * 24 / (N-1);
+    return Math.max(0, dose * ka / (vd * (ka - ke)) * (Math.exp(-ke*t) - Math.exp(-ka*t)));
+  });
+}
+
+function getPdFactor() {
+  const pdOn = document.getElementById('pd-toggle').checked;
+  if (!pdOn) return 1.0;
+  const sens = +document.getElementById('pd-sens').value;
+  const comp = +document.getElementById('pd-comp').value;
+  // PD補正係数: 感受性↑ × 代償能↓ → 治療上限をこの係数で割り下げる
+  return sens / comp;
+}
+
+function update() {
+  const gfr = +document.getElementById('gfr').value;
+  const hbf = +document.getElementById('hbf').value;
+  const fat = +document.getElementById('fat').value;
+  const alb = +document.getElementById('alb').value;
+  const tbw = +document.getElementById('tbw').value;
+  const get = +document.getElementById('get').value;
+
+  document.getElementById('gfr-v').textContent = gfr;
+  document.getElementById('hbf-v').textContent = hbf;
+  document.getElementById('fat-v').textContent = fat;
+  document.getElementById('alb-v').textContent = alb.toFixed(1);
+  document.getElementById('tbw-v').textContent = tbw;
+  document.getElementById('get-v').textContent = get;
+
+  // PD UIの表示制御
+  const pdOn = document.getElementById('pd-toggle').checked;
+  document.getElementById('pd-param-area').style.display = pdOn ? 'block' : 'none';
+  document.getElementById('pd-legend').style.display = pdOn ? 'inline-flex' : 'none';
+
+  if (pdOn) {
+    const sens = +document.getElementById('pd-sens').value;
+    const comp = +document.getElementById('pd-comp').value;
+    document.getElementById('pd-sens-v').textContent = sens.toFixed(2);
+    document.getElementById('pd-comp-v').textContent = comp.toFixed(2);
+    const sensPct = Math.round((sens - 1) * 100);
+    const compPct = Math.round((comp - 1) * 100);
+    document.getElementById('pd-sens-badge').textContent = (sensPct >= 0 ? '+' : '') + sensPct + '%';
+    document.getElementById('pd-comp-badge').textContent = (compPct >= 0 ? '+' : '') + compPct + '%';
+    document.getElementById('pd-sens-badge').style.cssText = sens > 1 ? 'background:#faece7;color:#712b13;' : 'background:#e1f5ee;color:#085041;';
+    document.getElementById('pd-comp-badge').style.cssText = comp < 1 ? 'background:#faece7;color:#712b13;' : 'background:#e1f5ee;color:#085041;';
+
+    const pdFactor = getPdFactor();
+    const shift = Math.round((1 - 1/pdFactor) * 100);
+    document.getElementById('pd-toggle-note').textContent = `PD補正係数 ${pdFactor.toFixed(2)}× → 治療上限が約${shift}%低下`;
+  } else {
+    document.getElementById('pd-toggle-note').textContent = 'オフ：治療域は若年成人基準で固定';
+  }
+
+  const vd = +(1.0 * (fat/REF.fat * 0.4 + tbw/REF.tbw * 0.6) * (REF.alb/alb * 0.3 + 0.7)).toFixed(2);
+  const cl = +(1.0 * (gfr/REF.gfr * 0.5 + hbf/REF.hbf * 0.5)).toFixed(2);
+  const ke = cl / vd;
+  const t12 = +(0.693 / ke).toFixed(1);
+  const ka = (get / REF.get) * 2.0;
+  const cmax = +(100 * ka / (vd * (ka - ke)) * Math.pow(ke/ka, ka/(ka-ke))).toFixed(1);
+
+  document.getElementById('vd-v').textContent = vd.toFixed(2) + ' L/kg';
+  document.getElementById('vd-tag').innerHTML = tagHtml(vd, 1.0, false);
+  document.getElementById('cl-v').textContent = cl.toFixed(2) + ' (相対値)';
+  document.getElementById('cl-tag').innerHTML = tagHtml(cl, 1.0, true);
+  document.getElementById('t12-v').textContent = t12 + ' h';
+  document.getElementById('t12-tag').innerHTML = tagHtml(t12, 0.693, false);
+  document.getElementById('cmax-v').textContent = cmax + ' (相対値)';
+  document.getElementById('cmax-tag').innerHTML = tagHtml(cmax, 100, false);
+
+  const N = 100;
+  const labels = Array.from({length:N}, (_,i) => (i*24/(N-1)).toFixed(1));
+  const curve = buildCurve(ka, ke, vd, 100, N);
+  const refCurve = buildCurve(2.0, 1.0, 1.0, 100, N);
+  const MTC_base = Math.max(...refCurve) * 0.85;
+  const MEC = Math.max(...refCurve) * 0.35;
+  const pdFactor = getPdFactor();
+  const MTC_pd = MTC_base / pdFactor;   // PD補正後の治療上限（低くなる）
+
+  const notes = [];
+  if (gfr < 60) notes.push('腎機能低下 → 水溶性薬物の蓄積リスク');
+  if (hbf < 60) notes.push('肝血流低下 → 初回通過効果の変化');
+  if (fat > 30) notes.push('脂肪増加 → 脂溶性薬物のVd拡大・t½延長');
+  if (alb < 3.5) notes.push('低アルブミン → 遊離型薬物濃度の上昇');
+  if (tbw < 55) notes.push('体水分減少 → 水溶性薬物の高濃度化');
+  if (get < 60) notes.push('胃排出遅延 → 吸収遅延・Tmax延長');
+  if (pdOn && pdFactor > 1.1) notes.push('PD感受性増大 → 治療上限が下がり中毒域に入りやすい');
+  document.getElementById('clinical-note').textContent = notes.length ? notes.join('　/　') : '大きな変化なし';
+
+  updateAccum();
+
+  // datasets構築
+  const datasets = [
+    { label:'現在の設定', data:curve, borderColor:'#378ADD', borderWidth:2.5, pointRadius:0, tension:0.4, fill:false },
+    { label:'若年成人（参照）', data:refCurve, borderColor:'#B4B2A9', borderWidth:1.5, borderDash:[4,4], pointRadius:0, tension:0.4, fill:false },
+    { label:'治療域 上限（PK基準）', data:Array(N).fill(MTC_base), borderColor:'#E24B4A', borderWidth: pdOn ? 1 : 1.5, borderDash:[2,3], pointRadius:0, fill:false },
+    { label:'治療域 下限', data:Array(N).fill(MEC), borderColor:'#639922', borderWidth:1, borderDash:[2,3], pointRadius:0, fill:false }
+  ];
+
+  if (pdOn && pdFactor > 1.01) {
+    datasets.push({
+      label:'PD補正後 治療上限',
+      data: Array(N).fill(MTC_pd),
+      borderColor: '#f5a623',
+      borderWidth: 2,
+      borderDash: [],
+      pointRadius: 0,
+      fill: false
+    });
+  }
+
+  if (pkChart) pkChart.destroy();
+  pkChart = new Chart(document.getElementById('pkChart'), {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: {
+        legend: { display:false },
+        tooltip: {
+          callbacks: {
+            title: ctx => '時間: ' + ctx[0].label + ' h',
+            label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1)
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display:true, text:'時間 (h)', color:'#888780', font:{size:12} },
+          ticks: { color:'#888780', maxTicksLimit:8 },
+          grid: { color:'rgba(136,135,128,0.12)' }
+        },
+        y: {
+          title: { display:true, text:'血中濃度（相対値）', color:'#888780', font:{size:12} },
+          ticks: { color:'#888780' },
+          grid: { color:'rgba(136,135,128,0.12)' },
+          min:0
+        }
+      }
+    }
+  });
+}
+
+let accumChart = null;
+
+function buildMultiDoseCurve(ka, ke, vd, dose, tau, nDoses, ptsPerDose) {
+  const dt = tau / ptsPerDose;
+  const totalPts = nDoses * ptsPerDose;
+  const times = [];
+  const concs = [];
+  for (let i = 0; i <= totalPts; i++) {
+    const t = i * dt;
+    times.push(+t.toFixed(2));
+    let c = 0;
+    for (let d = 0; d < nDoses; d++) {
+      const td = t - d * tau;
+      if (td > 0) {
+        c += dose * ka / (vd * (ka - ke)) * (Math.exp(-ke * td) - Math.exp(-ka * td));
+      }
+    }
+    concs.push(Math.max(0, c));
+  }
+  return { times, concs };
+}
+
+function updateAccum() {
+  const tau   = +document.getElementById('tau').value;
+  const nDoses = +document.getElementById('doses').value;
+  document.getElementById('tau-v').textContent   = tau;
+  document.getElementById('doses-v').textContent = nDoses;
+
+  const gfr = +document.getElementById('gfr').value;
+  const hbf = +document.getElementById('hbf').value;
+  const fat = +document.getElementById('fat').value;
+  const alb = +document.getElementById('alb').value;
+  const tbw = +document.getElementById('tbw').value;
+  const get = +document.getElementById('get').value;
+
+  const vd  = +(1.0 * (fat/REF.fat * 0.4 + tbw/REF.tbw * 0.6) * (REF.alb/alb * 0.3 + 0.7)).toFixed(3);
+  const cl  = +(1.0 * (gfr/REF.gfr * 0.5 + hbf/REF.hbf * 0.5)).toFixed(3);
+  const ke  = cl / vd;
+  const ka  = (get / REF.get) * 2.0;
+
+  const vdRef = 1.0, clRef = 1.0, keRef = clRef / vdRef, kaRef = 2.0;
+
+  const PTS = 40;
+  const cur = buildMultiDoseCurve(ka, kaRef > ke ? ke : ke, ke, 100, tau, nDoses, PTS);
+
+  const curActual = buildMultiDoseCurve(ka, ke, vd, 100, tau, nDoses, PTS);
+  const refActual = buildMultiDoseCurve(kaRef, keRef, vdRef, 100, tau, nDoses, PTS);
+
+  const cmaxSS_elder = Math.max(...curActual.concs.slice(-PTS));
+  const cminSS_elder = Math.min(...curActual.concs.slice(-PTS));
+  const cmaxSS_young = Math.max(...refActual.concs.slice(-PTS));
+  const cminSS_young = Math.min(...refActual.concs.slice(-PTS));
+  const cmaxFirst_elder = Math.max(...curActual.concs.slice(0, PTS));
+  const cmaxFirst_young = Math.max(...refActual.concs.slice(0, PTS));
+
+  const accumR_elder = cmaxFirst_elder > 0 ? +(cmaxSS_elder / cmaxFirst_elder).toFixed(2) : 1;
+  const accumR_young = cmaxFirst_young > 0 ? +(cmaxSS_young / cmaxFirst_young).toFixed(2) : 1;
+
+  document.getElementById('accum-ratio-elder').textContent = accumR_elder.toFixed(2) + '×';
+  document.getElementById('accum-ratio-young').textContent = accumR_young.toFixed(2) + '×';
+  document.getElementById('accum-diff').textContent = '+' + Math.max(0, accumR_elder - accumR_young).toFixed(2) + '×';
+
+  const refCurve0 = buildMultiDoseCurve(kaRef, keRef, vdRef, 100, tau, 1, PTS);
+  const MTC_base = Math.max(...refCurve0.concs) * 0.85;
+  const MEC = Math.max(...refCurve0.concs) * 0.35;
+  const pdFactor = getPdFactor();
+  const MTC_pd = MTC_base / pdFactor;
+
+  const labels = curActual.times;
+
+  const accumDatasets = [
+    { label:'現在の設定', data: curActual.concs.map(v => +v.toFixed(2)), borderColor:'#378ADD', borderWidth:2.5, pointRadius:0, tension:0.3, fill:false },
+    { label:'若年成人（参照）', data: refActual.concs.map(v => +v.toFixed(2)), borderColor:'#B4B2A9', borderWidth:1.5, borderDash:[4,4], pointRadius:0, tension:0.3, fill:false },
+    { label:'治療域 上限', data: Array(labels.length).fill(+MTC_base.toFixed(2)), borderColor:'#E24B4A', borderWidth:1, borderDash:[2,3], pointRadius:0, fill:false },
+    { label:'治療域 下限', data: Array(labels.length).fill(+MEC.toFixed(2)), borderColor:'#639922', borderWidth:1, borderDash:[2,3], pointRadius:0, fill:false }
+  ];
+
+  if (pdFactor > 1.01) {
+    accumDatasets.push({
+      label:'PD補正後 治療上限',
+      data: Array(labels.length).fill(+MTC_pd.toFixed(2)),
+      borderColor:'#f5a623',
+      borderWidth:2,
+      borderDash:[],
+      pointRadius:0,
+      fill: false
+    });
+  }
+
+  const noteArr = [];
+  if (accumR_elder > 2.0) noteArr.push('蓄積比 >2：定常状態で初回の2倍以上に達する');
+  if (cmaxSS_elder > MTC_base * 1.05) noteArr.push('定常状態のCmaxが治療域上限（PK基準）を超過：中毒リスク');
+  if (pdFactor > 1.01 && cmaxSS_elder > MTC_pd * 1.05) noteArr.push('PD補正後の上限も超過：より低い濃度で中毒域に入っている');
+  if (cminSS_elder < MEC) noteArr.push('トラフ値が治療域下限を下回る：効果不足の可能性');
+  if (accumR_elder - accumR_young > 0.5) noteArr.push('若年成人より蓄積が顕著：投与間隔の延長を検討');
+  document.getElementById('accum-note').textContent = noteArr.length ? noteArr.join('　/　') : '現在の設定では蓄積は許容範囲内';
+
+  if (accumChart) accumChart.destroy();
+  accumChart = new Chart(document.getElementById('accumChart'), {
+    type: 'line',
+    data: { labels, datasets: accumDatasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: ctx => '時間: ' + ctx[0].label + ' h',
+            label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1)
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display:true, text:'時間 (h)', color:'#888780', font:{size:12} },
+          ticks: { color:'#888780', maxTicksLimit:10 },
+          grid: { color:'rgba(136,135,128,0.12)' }
+        },
+        y: {
+          title: { display:true, text:'血中濃度（相対値）', color:'#888780', font:{size:12} },
+          ticks: { color:'#888780' },
+          grid: { color:'rgba(136,135,128,0.12)' },
+          min: 0
+        }
+      }
+    }
+  });
+}
+
+update();
+</script>
+</body>
+</html>
